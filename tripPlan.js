@@ -1,24 +1,20 @@
-import { addDayPlanMarkers } from "./common.js";
-
-window.addDayPlanMarkers = addDayPlanMarkers;
-
-export const tripPlan = (plan) => {
+export const tripPlan = (plan, loading) => {
   console.log(plan);
   let planSection = document.createElement("ul");
   planSection.id = "tripPlan";
   plan.forEach((day) => {
-    planSection.appendChild(dayTab(day));
+    planSection.appendChild(dayTab(day, loading));
   });
-  addDayPlanMarkers(plan[0]);
   return planSection;
 };
 
-function dayTab(day) {
+function dayTab(day, loading = false) {
   var daySection = document.createElement("li");
   daySection.id = dayDate(day);
-  daySection.innerHTML = `
-    <a href='#${dayDate(day)}'
-    onclick='addDayPlanMarkers(${JSON.stringify(day)})'>${dayDate(day)}</a>
+  daySection.innerHTML = loading
+  ? 'Loading...'
+  : `
+    <a href='#${dayDate(day)}'>${dayDate(day)}</a>
   `;
   daySection.appendChild(activities(day));
   return daySection;
@@ -28,7 +24,7 @@ function dayDate(day) {
   let date = new Date(day.date);
   return date.toLocaleDateString(navigator.language, {
     day: "numeric",
-    month: "short"
+    month: "short",
   });
 }
 

@@ -8,14 +8,13 @@ import {
   hide,
   show,
   empty,
-  previousTrips,
   updateList,
   updateImage,
-  updateMap,
   participants,
   getHTMLFromParticipant,
   datesRangeFromTo,
-  formatRequest
+  formatRequest,
+  getVisitorId,
 } from "./common.js";
 import { tripPlan } from "./tripPlan.js";
 import "./typedefs.js";
@@ -33,12 +32,9 @@ window.dates = [];
  * Called when page is loaded.
  */
 window.initPlan = () => {
-  previousTrips();
   const input = RANDOM_CITIES[Math.floor(Math.random() * RANDOM_CITIES.length)];
   searchLocation(input).then((data) => {
     updateImage(data[0]);
-    updateMap(data[0]);
-    window.loadTrip("62e5288606d336069b7c794f");
   });
 };
 
@@ -58,37 +54,28 @@ window.search = (input) => {
 };
 
 /**
+ * Load trip planning page without removing data.
+ */
+window.back = () => {
+  hide(document.getElementById("tripPlanContainer"));
+  show(document.getElementById("tripRequest"));
+};
+
+/**
  * Load trip planning page
  */
 window.planTrip = () => {
-  hide(document.getElementById("tripPlan"));
+  hide(document.getElementById("tripPlanContainer"));
   window.search("");
   show(document.getElementById("tripRequest"), "flex");
 };
 
 /**
- * Load trip plan from server
- * @param {string} tripId
- */
-window.loadTrip = (tripId) => {
-  hide(document.getElementById("tripRequest"));
-  let tripPlanElement = document.getElementById("tripPlan");
-  getTrip(tripId).then((data) => {
-    console.log(data);
-    tripPlanElement.parentNode.replaceChild(
-      show(tripPlan(data.plan), "flex"),
-      tripPlanElement
-    );
-  });
-};
-
-/**
- * Set the current city to the user selected one
+ * Set the current city to the user's selected one
  * @param {number} index
  */
 window.selectCity = (index) => {
   updateImage(cities[index]);
-  updateMap(cities[index]);
   document.getElementById("city").value = cities[index].name;
   empty(document.getElementById("destList"));
   show(document.getElementById("dates"), "flex");
@@ -143,30 +130,42 @@ window.changeParticipant = (e, id) => {
 };
 
 /**
- * Get visitor id from local storage.
- * If absent, get it from the server
- */
-window.getVisitorId = async () => {
-  if (!localStorage.getItem("visitor-id")) {
-    return await requestVisitorId();
-  } else {
-    return localStorage.getItem("visitor-id");
-  }
-};
-
-/**
  * Get the plan from the server.
  * The returned triprequest id is pushed to the localStorage
  */
 window.getPlan = async () => {
   const tripRequest = formatRequest();
   console.log("Trip request:", tripRequest);
-  const visitorId = await requestVisitorId();
+  const visitorId = await getVisitorId();
+  console.log(visitorId);
   process(tripRequest, visitorId).then((data) => {
     console.log("Triprequest id:", data);
-    let trips = JSON.parse(localStorage.getItem("trips"));
-    trips.push(data);
-    localStorage.setItem("trips", JSON.stringify(trips));
-    previousTrips();
+    localStorage.setItem("trip", data);
+    window.loadTrip(data);
   });
+}
+
+/**
+ * Load trip plan from server
+ * @param {string} tripId
+ */
+window.loadTrip = (tripId) => {
+  hide(document.getElementById("tripRequest"));
+  show(document.getElementById("tripPlanContainer"));
+  let isFinished = false;
+  var loading = 0;
+  loading = setInterval(() => {
+    getTrip(tripId).then((data) => {
+      let tripPlanElement = document.querySelector("#tripPlanContainer > ul");
+      if(data.plan === "undefined") return;
+      isFinished = data.plan.every(day => day.progress === "finished");
+      tripPlanElement.parentNode.replaceChild(
+        show(tripPlan(data.plan, !isFinished), "flex"),
+        tripPlanElement
+      );
+    })
+    if (isFinished) {
+      clearInterval(loading);
+    }
+  }, 1000);
 };

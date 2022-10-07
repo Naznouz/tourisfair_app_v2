@@ -1,5 +1,6 @@
 /**
  * Globals
+ *
  */
 
 import "./typedefs.js";
@@ -36,7 +37,7 @@ export async function searchLocation(input) {
   const query = {
     verb: SEARCH_VERB,
     parameters: `?type=city&name=/^${input}/gi`,
-    options: {}
+    options: {},
   };
 
   return await tfFetch(query);
@@ -55,7 +56,7 @@ export async function getTrip(tripId) {
   const query = {
     verb: TRIPREQUEST_VERB + "/" + tripId,
     parameters: "",
-    options: {}
+    options: {},
   };
 
   return await tfFetch(query);
@@ -76,12 +77,12 @@ export async function requestVisitorId() {
       method: "POST",
       headers: {
         accept: "application/json",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        signature: "tourisfair_front_app"
-      })
-    }
+        signature: "tourisfair_front_app",
+      }),
+    },
   };
   return await tfFetch(query).then((data) => {
     console.log("Visitor ID: ", data.visitorId);
@@ -110,10 +111,10 @@ export async function process(tripRequest, visitorId) {
       headers: {
         accept: "application/json",
         "visitor-id": visitorId,
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify(tripRequest)
-    }
+      body: JSON.stringify(tripRequest),
+    },
   };
   return await tfFetch(query);
 }
